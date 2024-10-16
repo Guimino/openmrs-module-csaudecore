@@ -10,9 +10,12 @@ public class TbNidPrefixProvider extends NidPrefixProvider {
 		super(locationBasedPrefixProvider);
 	}
 	
+	/**
+	 * Uses Consultas Externas de PNCTL service code.
+	 */
 	@Override
 	public int getServiceCode() {
-		throw new UnsupportedOperationException("Unimplemented method 'getServiceCode'");
+		return 9;
 	}
 	
 }
