@@ -25,6 +25,10 @@
 		<class>org.openmrs.module.csaudecore.extension.html.AdminList</class>
 	</extension> -->
 
+	<require_modules>
+		<require_module version="4.10.0">org.openmrs.module.idgen</require_module>
+	</require_modules>
+
 	<aware_of_modules>
 		<aware_of_module>org.openmrs.module.legacyui</aware_of_module>
 	</aware_of_modules>
@@ -93,13 +97,8 @@
 		<file>messages.properties</file>
 	</messages>
 	<messages>
-		<lang>fr</lang>
-		<file>messages_fr.properties</file>
-	</messages>
-	<messages>
-		<lang>es</lang>
-		<file>messages_es.properties</file>
+		<lang>pt</lang>
+		<file>messages_pt.properties</file>
 	</messages>
 	<!-- /Internationalization -->
-	
 </module>

@@ -57,4 +57,16 @@
 		<javaCompilerTarget>11</javaCompilerTarget>
         <openmrsPlatformVersion>2.6.6</openmrsPlatformVersion>
     </properties>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.openmrs.module</groupId>
+				<artifactId>idgen-api</artifactId>
+				<version>4.10.0</version>
+				<type>jar</type>
+				<scope>provided</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 </project>
