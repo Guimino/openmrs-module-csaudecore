@@ -11,7 +11,9 @@ import org.openmrs.Patient;
 import org.openmrs.api.context.Context;
 import org.openmrs.parameter.EncounterSearchCriteria;
 import org.openmrs.parameter.EncounterSearchCriteriaBuilder;
+import org.springframework.stereotype.Component;
 
+@Component
 public class EncounterUtils {
 	
 	/**
@@ -21,7 +23,7 @@ public class EncounterUtils {
 	 * @param the encounterType UUID
 	 * @return Optional containing the last Encounter, or empty if the list is empty
 	 */
-	public static Optional<Encounter> getLastEncounter(Patient patient, EncounterType encounterType) {
+	public Optional<Encounter> getLastEncounter(Patient patient, EncounterType encounterType) {
 
 		EncounterSearchCriteria encounterSearchCriteria = new EncounterSearchCriteriaBuilder().setIncludeVoided(false)
 				.setPatient(patient).setEncounterTypes(Arrays.asList(encounterType))
