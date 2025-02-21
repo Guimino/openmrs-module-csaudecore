@@ -25,3 +25,8 @@ jobs:
         run: mvn --batch-mode deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Trigger backend image build
+        run: gh workflow run publish_backend_snapshot_images.yml -f cache_bust=true -R csaude/openmrs-distro-sesp
+        env:
+          GH_TOKEN: ${{ secrets.RUN_DISTRO_SESP_WORKFLOWS }}
