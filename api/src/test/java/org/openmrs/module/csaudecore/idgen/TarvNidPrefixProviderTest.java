@@ -24,8 +24,8 @@ public class TarvNidPrefixProviderTest extends BaseContextMockTest {
             };
         });
     }
-
-    @Test
+	
+	@Test
     public void shouldNotAllowNumbersWithThreeDigitsOrMore() {
 
         assertThrows(IllegalArgumentException.class, () -> {

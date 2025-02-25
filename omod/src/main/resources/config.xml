@@ -27,6 +27,7 @@
 
 	<require_modules>
 		<require_module version="4.10.0">org.openmrs.module.idgen</require_module>
+		<require_module version="2.41.0">org.openmrs.module.webservices.rest</require_module>
 	</require_modules>
 
 	<aware_of_modules>
