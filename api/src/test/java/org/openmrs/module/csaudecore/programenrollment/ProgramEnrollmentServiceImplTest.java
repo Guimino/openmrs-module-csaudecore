@@ -1,11 +1,16 @@
 package org.openmrs.module.csaudecore.programenrollment;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.stringContainsInOrder;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.openmrs.module.csaudecore.util.CSaudeCoreConstants.PROGRAM_TARV_UUID;
@@ -23,6 +28,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.openmrs.Concept;
+import org.openmrs.Location;
 import org.openmrs.Patient;
 import org.openmrs.PatientIdentifier;
 import org.openmrs.PatientIdentifierType;
@@ -85,7 +91,7 @@ public class ProgramEnrollmentServiceImplTest {
 		APIException exception = assertThrows(APIException.class,
 		    () -> programEnrollmentService.saveProgramEnrollment(programEnrollment));
 
-		assertTrue(exception.getMessage().contains("already enrolled"));
+		assertThat(exception.getMessage(), stringContainsInOrder("already enrolled"));
 	}
 	
 	@Test
@@ -102,19 +108,26 @@ public class ProgramEnrollmentServiceImplTest {
 		PatientProgram newPatientProgram = new PatientProgram();
 		newPatientProgram.setPatient(patient);
 		newPatientProgram.setProgram(program);
+		newPatientProgram.setLocation(new Location());
 		ProgramEnrollment programEnrollment = new ProgramEnrollment();
 		programEnrollment.setPatientProgram(newPatientProgram);
 		programEnrollment.setPatientIdentifier(new PatientIdentifier());
 
+		IdentifierSource identifierSource = new SequentialIdentifierGenerator();
+		PatientIdentifierType identifierType = new PatientIdentifierType();
+		identifierType.setUuid("e2b966d0-1d5f-11e0-b929-000c29ad1d07");
+		identifierSource.setIdentifierType(identifierType);
+
 		when(programWorkflowService.getPatientPrograms(patient, program, null, null, null, null, false))
 		        .thenReturn(List.of(previousPatientProgram));
-		when(patientService.getPatientIdentifiersByPatientProgram(previousPatientProgram))
+		when(identifierSourceService.getIdentifierSourceByUuid(anyString())).thenReturn(identifierSource);
+		when(patientService.getPatientIdentifiers(isNull(), anyList(), anyList(), anyList(), isNull()))
 		        .thenReturn(List.of(existingPatientIdentifier));
 
 		APIException exception = assertThrows(APIException.class,
 		    () -> programEnrollmentService.saveProgramEnrollment(programEnrollment));
 
-		assertTrue(exception.getMessage().contains("Patient identifier must be the same"));
+		assertThat(exception.getMessage(), stringContainsInOrder("Patient identifier must be the same"));
 	}
 	
 	@Test
@@ -127,6 +140,7 @@ public class ProgramEnrollmentServiceImplTest {
 		PatientProgram patientProgram = new PatientProgram();
 		patientProgram.setPatient(patient);
 		patientProgram.setProgram(program);
+		patientProgram.setLocation(new Location());
 		ProgramWorkflowState programWorkflowState = new ProgramWorkflowState();
 		Concept transferFromOtherFacility = new Concept();
 		String conceptUuid = "e104ae18-f4e6-482c-bfbc-40281e240795";
@@ -141,8 +155,16 @@ public class ProgramEnrollmentServiceImplTest {
 		programEnrollment.setPatientProgram(patientProgram);
 		programEnrollment.setPatientIdentifier(new PatientIdentifier("", null, null));
 
+		IdentifierSource identifierSource = new SequentialIdentifierGenerator();
+		PatientIdentifierType identifierType = new PatientIdentifierType();
+		identifierType.setUuid("e2b966d0-1d5f-11e0-b929-000c29ad1d07");
+		identifierSource.setIdentifierType(identifierType);
+
 		when(administrationService.getGlobalPropertyValue(anyString(), any())).thenReturn(conceptUuid);
 		when(conceptService.getConceptByUuid(anyString())).thenReturn(transferFromOtherFacility);
+		when(identifierSourceService.getIdentifierSourceByUuid(anyString())).thenReturn(identifierSource);
+		when(patientService.getPatientIdentifiers(isNull(), anyList(), anyList(), anyList(), isNull()))
+		        .thenReturn(Collections.emptyList());
 
 		PatientProgram savedPatientProgram = patientProgram.copy();
 		savedPatientProgram.setId(1);
@@ -151,7 +173,7 @@ public class ProgramEnrollmentServiceImplTest {
 		APIException exception = assertThrows(APIException.class,
 		    () -> programEnrollmentService.saveProgramEnrollment(programEnrollment));
 
-		assertTrue(exception.getMessage().contains("Identifier is required"));
+		assertThat(exception.getMessage(), stringContainsInOrder("Identifier is required"));
 	}
 	
 	@Test
@@ -164,6 +186,7 @@ public class ProgramEnrollmentServiceImplTest {
 		PatientProgram patientProgram = new PatientProgram();
 		patientProgram.setPatient(patient);
 		patientProgram.setProgram(program);
+		patientProgram.setLocation(new Location());
 		
 		ProgramEnrollment programEnrollment = new ProgramEnrollment();
 		programEnrollment.setPatientProgram(patientProgram);
@@ -182,6 +205,8 @@ public class ProgramEnrollmentServiceImplTest {
 		when(identifierSourceService.generateIdentifier(any(IdentifierSource.class), anyString())).thenReturn(
 		    generatedIdentifier);
 		when(patientService.getPatientIdentifierTypeByUuid(anyString())).thenReturn(identifierType);
+		when(patientService.getPatientIdentifiers(isNull(), anyList(), anyList(), anyList(), isNull())).thenReturn(
+		    Collections.emptyList());
 		
 		PatientProgram savedPatientProgram = patientProgram.copy();
 		savedPatientProgram.setId(1);
@@ -192,9 +217,51 @@ public class ProgramEnrollmentServiceImplTest {
 		verify(identifierSourceService).generateIdentifier(any(IdentifierSource.class), anyString());
 		verify(patientService).savePatientIdentifier(patientIdentifierArgumentCaptor.capture());
 		
-		// TODO use hamcrest
-		assertEquals(patientIdentifierArgumentCaptor.getValue().getIdentifier(), generatedIdentifier);
+		assertThat(patientIdentifierArgumentCaptor.getValue().getIdentifier(), is(generatedIdentifier));
 		
+	}
+	
+	@Test
+	public void saveProgramEnrollmentShouldSetIdentifierAsTheOnlyPreferred() {
+		Patient patient = new Patient();
+		Program program = new Program();
+		program.setUuid(PROGRAM_TARV_UUID);
+		PatientProgram patientProgram = new PatientProgram();
+		patientProgram.setPatient(patient);
+		patientProgram.setProgram(program);
+		patientProgram.setLocation(new Location());
+		
+		ProgramEnrollment programEnrollment = new ProgramEnrollment();
+		programEnrollment.setPatientProgram(patientProgram);
+		PatientIdentifier patientIdentifier = new PatientIdentifier("provided-identifier", null, null);
+		programEnrollment.setPatientIdentifier(patientIdentifier);
+		
+		IdentifierSource identifierSource = new SequentialIdentifierGenerator();
+		PatientIdentifierType identifierType = new PatientIdentifierType();
+		identifierType.setUuid("e2b966d0-1d5f-11e0-b929-000c29ad1d07");
+		identifierSource.setIdentifierType(identifierType);
+		
+		PatientIdentifier existingPatientIdentifier = new PatientIdentifier();
+		existingPatientIdentifier.setPreferred(true);
+		
+		when(identifierSourceService.getIdentifierSourceByUuid(anyString())).thenReturn(identifierSource);
+		when(patientService.getPatientIdentifierTypeByUuid(anyString())).thenReturn(identifierType);
+		when(patientService.getPatientIdentifiers(isNull(), isNull(), anyList(), anyList(), eq(true))).thenReturn(
+		    List.of(existingPatientIdentifier));
+		
+		PatientProgram savedPatientProgram = patientProgram.copy();
+		savedPatientProgram.setId(1);
+		when(programWorkflowService.savePatientProgram(any())).thenReturn(savedPatientProgram);
+		
+		programEnrollmentService.saveProgramEnrollment(programEnrollment);
+		
+		verify(patientService, times(2)).savePatientIdentifier(patientIdentifierArgumentCaptor.capture());
+		List<PatientIdentifier> capturedValues = patientIdentifierArgumentCaptor.getAllValues();
+		assertThat(capturedValues.get(0), is(existingPatientIdentifier));
+		assertThat(capturedValues.get(0).getPreferred(), is(false));
+		assertThat(capturedValues.get(1), is(patientIdentifier));
+		assertThat(capturedValues.get(1).getPreferred(), is(true));
+		verify(programWorkflowService).savePatientProgram(any(PatientProgram.class));
 	}
 	
 	@Test
@@ -205,6 +272,7 @@ public class ProgramEnrollmentServiceImplTest {
 		PatientProgram patientProgram = new PatientProgram();
 		patientProgram.setPatient(patient);
 		patientProgram.setProgram(program);
+		patientProgram.setLocation(new Location());
 		
 		ProgramEnrollment programEnrollment = new ProgramEnrollment();
 		programEnrollment.setPatientProgram(patientProgram);
@@ -218,6 +286,8 @@ public class ProgramEnrollmentServiceImplTest {
 		
 		when(identifierSourceService.getIdentifierSourceByUuid(anyString())).thenReturn(identifierSource);
 		when(patientService.getPatientIdentifierTypeByUuid(anyString())).thenReturn(identifierType);
+		when(patientService.getPatientIdentifiers(isNull(), anyList(), anyList(), anyList(), isNull())).thenReturn(
+		    Collections.emptyList());
 		
 		PatientProgram savedPatientProgram = patientProgram.copy();
 		savedPatientProgram.setId(1);
@@ -226,7 +296,7 @@ public class ProgramEnrollmentServiceImplTest {
 		programEnrollmentService.saveProgramEnrollment(programEnrollment);
 		
 		verify(patientService).savePatientIdentifier(patientIdentifierArgumentCaptor.capture());
-		assertEquals(patientIdentifierArgumentCaptor.getValue().getIdentifier(), identifier);
+		assertThat(patientIdentifierArgumentCaptor.getValue().getIdentifier(), is(identifier));
 		verify(programWorkflowService).savePatientProgram(any(PatientProgram.class));
 	}
 	
@@ -241,6 +311,7 @@ public class ProgramEnrollmentServiceImplTest {
 		patientProgram.setId(1234);
 		patientProgram.setPatient(patient);
 		patientProgram.setProgram(program);
+		patientProgram.setLocation(new Location());
 		
 		ProgramEnrollment programEnrollment = new ProgramEnrollment();
 		programEnrollment.setPatientProgram(patientProgram);
@@ -260,14 +331,15 @@ public class ProgramEnrollmentServiceImplTest {
 		when(identifierSourceService.generateIdentifier(any(IdentifierSource.class), anyString())).thenReturn(
 		    generatedIdentifier);
 		when(programWorkflowService.savePatientProgram(any())).thenReturn(patientProgram);
+		when(patientService.getPatientIdentifiers(isNull(), anyList(), anyList(), anyList(), isNull())).thenReturn(
+		    Collections.emptyList());
 		
 		programEnrollmentService.saveProgramEnrollment(programEnrollment);
 		
 		verify(identifierSourceService).generateIdentifier(any(IdentifierSource.class), anyString());
 		verify(patientService).savePatientIdentifier(patientIdentifierArgumentCaptor.capture());
 		
-		// TODO use hamcrest
-		assertEquals(patientIdentifierArgumentCaptor.getValue().getIdentifier(), generatedIdentifier);
+		assertThat(patientIdentifierArgumentCaptor.getValue().getIdentifier(), is(generatedIdentifier));
 	}
 	
 	@Test
@@ -279,6 +351,7 @@ public class ProgramEnrollmentServiceImplTest {
 		patientProgram.setId(1234);
 		patientProgram.setPatient(patient);
 		patientProgram.setProgram(program);
+		patientProgram.setLocation(new Location());
 		
 		ProgramEnrollment programEnrollment = new ProgramEnrollment();
 		programEnrollment.setPatientProgram(patientProgram);
@@ -291,14 +364,15 @@ public class ProgramEnrollmentServiceImplTest {
 		identifierSource.setIdentifierType(identifierType);
 		
 		when(identifierSourceService.getIdentifierSourceByUuid(anyString())).thenReturn(identifierSource);
-		
 		when(programWorkflowService.savePatientProgram(any())).thenReturn(patientProgram);
+		when(patientService.getPatientIdentifiers(isNull(), anyList(), anyList(), anyList(), isNull())).thenReturn(
+		    Collections.emptyList());
 		
 		programEnrollmentService.saveProgramEnrollment(programEnrollment);
 		
 		verify(identifierSourceService, never()).generateIdentifier(any(IdentifierSource.class), anyString());
 		verify(patientService).savePatientIdentifier(patientIdentifierArgumentCaptor.capture());
-		assertEquals(patientIdentifierArgumentCaptor.getValue().getIdentifier(), identifier);
+		assertThat(patientIdentifierArgumentCaptor.getValue().getIdentifier(), is(identifier));
 		verify(programWorkflowService).savePatientProgram(any(PatientProgram.class));
 	}
 	
@@ -338,7 +412,7 @@ public class ProgramEnrollmentServiceImplTest {
 		when(programWorkflowService.getPatientProgramByUuid(uuid)).thenReturn(patientProgram);
 		when(patientService.getPatientIdentifiersByPatientProgram(patientProgram)).thenReturn(List.of(patientIdentifier));
 		ProgramEnrollment programEnrollment = programEnrollmentService.getProgramEnrollmentByUuid(uuid);
-		assertEquals(programEnrollment.getPatientProgram(), patientProgram);
+		assertThat(programEnrollment.getPatientProgram(), is(patientProgram));
 	}
 	
 	@Test
@@ -349,6 +423,6 @@ public class ProgramEnrollmentServiceImplTest {
 		when(programWorkflowService.getPatientProgramByUuid(uuid)).thenReturn(patientProgram);
 		when(patientService.getPatientIdentifiersByPatientProgram(patientProgram)).thenReturn(List.of(patientIdentifier));
 		ProgramEnrollment programEnrollment = programEnrollmentService.getProgramEnrollmentByUuid(uuid);
-		assertEquals(programEnrollment.getPatientIdentifier(), patientIdentifier);
+		assertThat(programEnrollment.getPatientIdentifier(), is(patientIdentifier));
 	}
 }

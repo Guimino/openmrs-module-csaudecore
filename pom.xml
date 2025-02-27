@@ -69,7 +69,7 @@
 	<properties>
 		<javaCompilerSource>11</javaCompilerSource>
 		<javaCompilerTarget>11</javaCompilerTarget>
-		<openmrsPlatformVersion>2.6.6</openmrsPlatformVersion>
+		<openmrsPlatformVersion>2.6.7</openmrsPlatformVersion>
 	</properties>
 
 	<dependencyManagement>

@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping(value = "/rest/" + RestConstants.VERSION_1 + CsaudeResourceController.CSAUDE_NAMESPACE)
 public class CsaudeResourceController extends MainResourceController {
 	
-	public static final String CSAUDE_NAMESPACE = "/csaude";
+	public static final String CSAUDE_NAMESPACE = "/csaudecore";
 	
 	@Override
 	public String getNamespace() {

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.openmrs.Concept;
+import org.openmrs.Location;
 import org.openmrs.Patient;
 import org.openmrs.PatientIdentifier;
 import org.openmrs.PatientIdentifierType;
@@ -65,23 +66,29 @@ public class ProgramEnrollmentServiceImpl extends BaseOpenmrsService implements 
 	
 	@Override
 	public ProgramEnrollment saveProgramEnrollment(ProgramEnrollment programEnrollment) {
-		
+
 		boolean isNewEnrollment = programEnrollment.getPatientProgram().getId() == null;
-		
+
 		if (isNewEnrollment && isAlreadyEnrolled(programEnrollment)) {
 			throw new APIException("Patient is already enrolled in this program");
 		}
-		
+
 		if (!reusingIdentifier(programEnrollment)) {
 			throw new APIException("Patient identifier must be the same for all enrollments in the same program");
 		}
-		
+
 		programWorkflowService.savePatientProgram(programEnrollment.getPatientProgram());
 		PatientIdentifier patientIdentifier = getOrGeneratePatientIdentifier(programEnrollment);
 		if (patientIdentifier != null && !patientIdentifier.getIdentifier().isBlank()) {
+			List<PatientIdentifier> preferredIdentifiers = getPatientIdentifiersByProgramEnrollment(programEnrollment, true,
+			    true);
+			preferredIdentifiers.stream().filter(i -> !i.equals(patientIdentifier)).forEach(i -> {
+				i.setPreferred(false);
+				patientService.savePatientIdentifier(i);
+			});
 			patientService.savePatientIdentifier(patientIdentifier);
 		}
-		
+
 		return programEnrollment;
 	}
 	
@@ -114,21 +121,38 @@ public class ProgramEnrollmentServiceImpl extends BaseOpenmrsService implements 
 			return true;
 		}
 
-		List<PatientProgram> patientPrograms = programWorkflowService.getPatientPrograms(
-		    programEnrollment.getPatientProgram().getPatient(), programEnrollment.getPatientProgram().getProgram(), null,
-		    null, null, null, false);
+		// Load all identifiers of the same type for the patient and location
+		List<PatientIdentifier> patientIdentifiers = getPatientIdentifiersByProgramEnrollment(programEnrollment, false,
+		    null);
 
-		// If the patient has no other enrollments in the program, the identifier does not need to be reused.
-		if (patientPrograms.isEmpty()) {
-			return true;
+		// Check if any of the identifiers is being reused
+		return patientIdentifiers.isEmpty() ? true
+		        : patientIdentifiers.stream().anyMatch((i) -> i.equals(programEnrollment.getPatientIdentifier()));
+	}
+	
+	/**
+	 * Get patient identifiers by program enrollment
+	 * 
+	 * @param programEnrollment Program enrollment
+	 * @param ignoreType Ignore identifier type, if true, the identifier type will not be used to
+	 *            filter the results
+	 * @param isPreferred If true, only preferred identifiers will be returned
+	 * @return List of patient identifiers
+	 */
+	private List<PatientIdentifier> getPatientIdentifiersByProgramEnrollment(ProgramEnrollment programEnrollment,
+	        boolean ignoreType, Boolean isPreferred) {
+		List<PatientIdentifierType> identifierTypes = null;
+		if (!ignoreType) {
+			String identifierSourceUUID = ProgramEnrollment.PROGRAM_TO_IDENTIFIER_SOURCE_MAP.get(programEnrollment
+			        .getPatientProgram().getProgram().getUuid());
+			IdentifierSource identifierSource = identifierSourceService.getIdentifierSourceByUuid(identifierSourceUUID);
+			identifierTypes = List.of(identifierSource.getIdentifierType());
 		}
-
-		return patientPrograms.stream().anyMatch((p) -> {
-			List<PatientIdentifier> patientIdentifiers = getNonVoidedPatientIdentifiers(p);
-			assert patientIdentifiers.size() <= 1;
-			return patientIdentifiers.isEmpty() ? false
-			        : patientIdentifiers.get(0).equals(programEnrollment.getPatientIdentifier());
-		});
+		List<Location> locations = List.of(programEnrollment.getPatientProgram().getLocation());
+		List<Patient> patients = List.of(programEnrollment.getPatientProgram().getPatient());
+		List<PatientIdentifier> patientIdentifiers = patientService.getPatientIdentifiers(null, identifierTypes, locations,
+		    patients, isPreferred);
+		return patientIdentifiers;
 	}
 	
 	private PatientIdentifier getOrGeneratePatientIdentifier(ProgramEnrollment programEnrollment) {
@@ -162,6 +186,7 @@ public class ProgramEnrollmentServiceImpl extends BaseOpenmrsService implements 
 		patientIdentifier.setLocation(patientProgram.getLocation());
 		patientIdentifier.setPatient(patientProgram.getPatient());
 		patientIdentifier.setPatientProgram(patientProgram);
+		patientIdentifier.setPreferred(true);
 		
 		return patientIdentifier;
 	}
