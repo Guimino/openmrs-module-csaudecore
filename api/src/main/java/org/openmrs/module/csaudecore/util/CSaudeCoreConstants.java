@@ -29,4 +29,15 @@ public final class CSaudeCoreConstants {
 	
 	public static final String IDENTIFIER_SOURCE_NID_CCR_UUID = "e930ed89-506b-41eb-8161-36c571edb363";
 	
+	// Configuracoes do ACTIVEMQ ARTEMIS
+	public static final String JMS_COMPONENT = "jms";
+	
+	public static final String URL_ACTIVEMQ_ARTEMIS = "camel.artemis.url";
+	
+	public static final String ARTEMIS_USER_NAME = "camel.artemis.username";
+	
+	public static final String ARTEMIS_PASSWORD = "camel.artemis.password";
+	
+	public static final String CSAUDECORE_NAMESPACE = "/csaudecore";
+	
 }

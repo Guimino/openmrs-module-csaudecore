@@ -20,7 +20,8 @@
 
 	<scm>
 		<connection>scm:git:git@github.com:csaude/openmrs-module-csaudecore.git</connection>
-		<developerConnection>scm:git:git@github.com:csaude/openmrs-module-csaudecore.git</developerConnection>
+		<developerConnection>
+			scm:git:git@github.com:csaude/openmrs-module-csaudecore.git</developerConnection>
 		<url>https://github.com/csaude/openmrs-module-csaudecore/</url>
 	</scm>
 
@@ -70,6 +71,9 @@
 		<javaCompilerSource>11</javaCompilerSource>
 		<javaCompilerTarget>11</javaCompilerTarget>
 		<openmrsPlatformVersion>2.6.7</openmrsPlatformVersion>
+		<camelVersion>3.20.9</camelVersion>
+		<artemisJmsClientVersion>2.13.0</artemisJmsClientVersion>
+		<springVersion>5.3.23</springVersion>
 	</properties>
 
 	<dependencyManagement>
@@ -128,6 +132,68 @@
 				<groupId>org.hamcrest</groupId>
 				<artifactId>hamcrest</artifactId>
 				<version>2.2</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.camel</groupId>
+				<artifactId>camel-core</artifactId>
+				<version>${camelVersion}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.camel</groupId>
+				<artifactId>camel-jms</artifactId>
+				<version>${camelVersion}</version>
+				<exclusions>
+					<exclusion>
+						<groupId>org.springframework</groupId>
+						<artifactId>spring-core</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>org.springframework</groupId>
+						<artifactId>spring-context</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>org.springframework</groupId>
+						<artifactId>spring-beans</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>org.springframework</groupId>
+						<artifactId>spring-aop</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>org.springframework</groupId>
+						<artifactId>spring-expression</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>org.springframework</groupId>
+						<artifactId>spring-tx</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>javax.jms</groupId>
+						<artifactId>javax.jms-api</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.camel</groupId>
+				<artifactId>camel-jackson</artifactId>
+				<version>${camelVersion}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-web</artifactId>
+				<version>${springVersion}</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-api</artifactId>
+				<version>1.7.25</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.activemq</groupId>
+				<artifactId>artemis-jms-client</artifactId>
+				<version>${artemisJmsClientVersion}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
