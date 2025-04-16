@@ -21,7 +21,7 @@ public class PrescriptionResource {
 	public ResponseEntity<?> save(@RequestBody PrescriptionPayload prescription) {
 		
 		// TODO: logica da prescricao
-		this.camelMessageService.sendPrescription(prescription);
+		this.camelMessageService.publishPrescription(prescription);
 		return ResponseEntity.noContent().build();
 	}
 }

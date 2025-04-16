@@ -7,6 +7,7 @@ import org.apache.camel.CamelContext;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.component.jms.JmsComponent;
 import org.openmrs.api.AdministrationService;
+import org.openmrs.module.csaudecore.camel.payload.DispensationPayload;
 import org.openmrs.module.csaudecore.camel.payload.PrescriptionResponsePayload;
 import org.openmrs.module.csaudecore.camel.service.CamelMessageService;
 import org.openmrs.module.csaudecore.util.CSaudeCoreConstants;
@@ -53,8 +54,19 @@ public class CamelRouteInitializer implements InitializingBean {
 					// TODO: alterar o object para PrescriptionResponsePayload, representa a
 					// resposta da prescricao
 					Object response = mapper.readValue(json, Object.class);
-					System.out.println("payload consumido: " + response);
-					camelMessageService.handlePrescriptionResponse(new PrescriptionResponsePayload());
+					System.out.println("payload consumido (Prescription Response): " + response);
+					camelMessageService.processPrescriptionResponse(new PrescriptionResponsePayload());
+				});
+
+				from("jms:queue:dispensation.queue").process(exchange -> {
+					String json = exchange.getIn().getBody(String.class);
+					ObjectMapper mapper = new ObjectMapper();
+
+					// TODO: alterar o object para DispensationPayload, representa a
+					// resposta da prescricao
+					Object response = mapper.readValue(json, Object.class);
+					System.out.println("payload consumido (Dispensation): " + response);
+					camelMessageService.consumeAndPersistDispensation(new DispensationPayload());
 				});
 			}
 		});

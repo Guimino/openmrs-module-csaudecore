@@ -1,6 +1,7 @@
 package org.openmrs.module.csaudecore.camel.service.impl;
 
 import org.apache.camel.ProducerTemplate;
+import org.openmrs.module.csaudecore.camel.payload.DispensationPayload;
 import org.openmrs.module.csaudecore.camel.payload.PrescriptionPayload;
 import org.openmrs.module.csaudecore.camel.payload.PrescriptionResponsePayload;
 import org.openmrs.module.csaudecore.camel.service.CamelMessageService;
@@ -16,18 +17,17 @@ public class CamelMessageServiceImpl implements CamelMessageService {
 	private ProducerTemplate producerTemplate;
 	
 	@Override
-	public void sendPrescription(PrescriptionPayload payload) {
+	public void publishPrescription(PrescriptionPayload payload) {
 		this.producerTemplate.sendBody("direct:sendPrescription", payload);
 	}
 	
 	@Override
-	public void handlePrescriptionResponse(PrescriptionResponsePayload payload) {
+	public void processPrescriptionResponse(PrescriptionResponsePayload payload) {
 		// TODO: implementar logica de confirmacao da Prescricao
 	}
 	
 	@Override
-	public void saveDispensation(PrescriptionResponsePayload payload) {
+	public void consumeAndPersistDispensation(DispensationPayload payload) {
 		// TODO Auto-generated method stub
-		
 	}
 }
