@@ -6,7 +6,9 @@ import org.openmrs.module.csaudecore.camel.payload.PrescriptionResponsePayload;
 import org.openmrs.module.csaudecore.camel.service.CamelMessageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+@Transactional
 @Service
 public class CamelMessageServiceImpl implements CamelMessageService {
 	

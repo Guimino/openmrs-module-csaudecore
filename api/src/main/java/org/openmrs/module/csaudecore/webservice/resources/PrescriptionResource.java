@@ -17,7 +17,7 @@ public class PrescriptionResource {
 	@Autowired
 	private CamelMessageService camelMessageService;
 	
-	@PostMapping("/save")
+	@PostMapping
 	public ResponseEntity<?> save(@RequestBody PrescriptionPayload prescription) {
 		
 		// TODO: logica da prescricao
